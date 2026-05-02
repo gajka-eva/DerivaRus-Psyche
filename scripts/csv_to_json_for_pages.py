@@ -1,9 +1,3 @@
-#!/usr/bin/env python3
-"""
-Конвертация CSV в JSON для GitHub Pages
-Оптимизировано для браузера: сокращает тексты для предпросмотра
-"""
-
 import pandas as pd
 import json
 import re
@@ -12,21 +6,22 @@ from pathlib import Path
 CSV_PATH = Path("data/dataset_adj_person.csv")
 OUTPUT_JSON = Path("docs/data/corpus.json")
 
-def clean_text(text, max_length=300):
-    """Очищает текст и обрезает до разумной длины"""
+def clean_text(text, max_length=None):
+    """Очистка текста без обрезания"""
     if pd.isna(text):
         return ""
     text = str(text)
-    # Убираем лишние пробелы
     text = re.sub(r'\s+', ' ', text)
     text = text.strip()
-    # Обрезаем для быстрой загрузки
-    if len(text) > max_length:
-        text = text[:max_length] + '...'
     return text
 
+def truncate_text(text, max_length=250):
+    """Обрезание только для предпросмотра"""
+    if len(text) <= max_length:
+        return text
+    return text[:max_length] + '...'
+
 def split_urls(urls_str):
-    """Разделяет URL-строку на список"""
     if pd.isna(urls_str) or not urls_str:
         return []
     return re.split(r'\s+', str(urls_str).strip())
@@ -41,80 +36,52 @@ def main():
             df = pd.read_csv(CSV_PATH, encoding=encoding, sep=None, engine='python')
             print(f"✅ Прочитано с кодировкой {encoding}")
             break
-        except Exception as e:
-            print(f"❌ {encoding}: {str(e)[:50]}")
+        except:
             continue
     
     if df is None:
-        print("💥 Не удалось прочитать файл")
+        print("❌ Не удалось прочитать CSV")
         return
     
-    print(f"📊 Загружено {len(df)} контекстов")
-    print(f"📋 Колонки: {list(df.columns)}")
+    print(f"📊 Загружено {len(df)} строк")
     
-    # Нормализуем имена колонок
-    column_mapping = {}
-    for col in df.columns:
-        col_lower = col.lower().strip()
-        if 'прилагательн' in col_lower or 'adj' in col_lower:
-            column_mapping[col] = 'adjective'
-        elif 'дериват' in col_lower or 'deriv' in col_lower:
-            column_mapping[col] = 'derivative'
-        elif 'суффикс' in col_lower or 'suffix' in col_lower:
-            column_mapping[col] = 'suffix'
-        elif 'текст' in col_lower or 'text' in col_lower or 'context' in col_lower:
-            column_mapping[col] = 'text'
-        elif 'стиль' in col_lower or 'style' in col_lower:
-            column_mapping[col] = 'style'
-        elif 'год' in col_lower or 'year' in col_lower:
-            column_mapping[col] = 'year'
-        elif 'url' in col_lower:
-            column_mapping[col] = 'urls'
-        elif 'домен' in col_lower or 'domain' in col_lower:
-            column_mapping[col] = 'domains'
-    
-    df.rename(columns=column_mapping, inplace=True)
-    print(f"📝 После переименования: {list(df.columns)}")
-    
-    # Создаём JSON для браузера
-    corpus_for_browser = []
-    
+    # Создаём JSON
+    corpus = []
     for idx, row in df.iterrows():
-        # Берём текст с обрезанием
-        text = clean_text(row.get('text', ''), max_length=250)
+        # Полный, необрезанный текст
+        full_text = clean_text(row.get('текст', ''))
+        
+        # Обрезанный текст для предпросмотра
+        preview_text = truncate_text(full_text, 250)
         
         entry = {
             'id': idx,
-            'adjective': str(row.get('adjective', '')),
-            'derivative': str(row.get('derivative', '')),
-            'suffix': str(row.get('suffix', '')),
-            'text': text,
-            'full_text': str(row.get('text', '')),  # Полный текст для детального просмотра
-            'style': str(row.get('style', '')),
-            'year': str(row.get('year', '')),
-            'urls': split_urls(row.get('urls', '')),
-            'domains': split_urls(row.get('domains', ''))
+            'adjective': str(row.get('прилагательное', '')),
+            'derivative': str(row.get('дериват', '')),
+            'suffix': str(row.get('суффикс', '')),
+            'text': preview_text,           # Обрезанный для списка
+            'full_text': full_text,         # Полный для модального окна
+            'style': str(row.get('функциональный стиль', '')),
+            'year': str(row.get('год', '')),
+            'urls': split_urls(row.get('URL', '')),
+            'domains': split_urls(row.get('домен', ''))
         }
-        
-        corpus_for_browser.append(entry)
+        corpus.append(entry)
     
-    # Сохраняем JSON
+    # Сохраняем
     OUTPUT_JSON.parent.mkdir(parents=True, exist_ok=True)
     with open(OUTPUT_JSON, 'w', encoding='utf-8') as f:
-        json.dump(corpus_for_browser, f, ensure_ascii=False, indent=None, separators=(',', ':'))
+        json.dump(corpus, f, ensure_ascii=False, separators=(',', ':'))
     
-    # Размер файла
-    file_size = OUTPUT_JSON.stat().st_size / (1024 * 1024)
+    print(f"✅ Сохранено {len(corpus)} записей в {OUTPUT_JSON}")
+    print(f"📏 Размер: {OUTPUT_JSON.stat().st_size / 1024 / 1024:.2f} MB")
     
-    print(f"\n✅ Готово!")
-    print(f"📁 Файл: {OUTPUT_JSON}")
-    print(f"📏 Размер: {file_size:.2f} MB")
-    print(f"📊 Записей: {len(corpus_for_browser)}")
-    
-    # Выводим пример
-    if corpus_for_browser:
+    # Проверяем, что full_text сохранился
+    if corpus:
+        sample = corpus[0]
         print(f"\n📝 Пример:")
-        print(json.dumps(corpus_for_browser[0], ensure_ascii=False, indent=2)[:500])
+        print(f"   text (предпросмотр): {sample['text'][:100]}...")
+        print(f"   full_text (полный): {len(sample['full_text'])} символов")
 
 if __name__ == "__main__":
     main()
