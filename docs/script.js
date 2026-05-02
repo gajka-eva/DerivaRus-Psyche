@@ -173,7 +173,7 @@ function performSearch() {
     displayResults(results);
 }
 
-// Отображение результатов с кнопкой развёртывания
+// Отображение результатов (с правильными полями)
 function displayResults(results) {
     const resultsDiv = document.getElementById('results');
     
@@ -185,15 +185,12 @@ function displayResults(results) {
     const allDerivatives = new Set(corpusData.map(item => item.derivative).filter(d => d));
     
     resultsDiv.innerHTML = results.slice(0, 100).map(item => {
-        // Проверяем, обрезан ли текст (обрезаем до 250 символов для предпросмотра)
-        const originalText = item.text || '';
-        let displayText = originalText;
-        let isTruncated = false;
+        // Используем full_text для определения, обрезан ли текст
+        const originalText = item.full_text || item.text || '';
+        const isTruncated = originalText.length > 250;
         
-        if (displayText.length > 250) {
-            displayText = displayText.substring(0, 250) + '...';
-            isTruncated = true;
-        }
+        // Показываем обрезанную версию (text)
+        let displayText = item.text || '';
         
         // Подсвечиваем дериваты в отображаемом тексте
         let highlightedText = displayText;
@@ -213,8 +210,8 @@ function displayResults(results) {
                     ${isTruncated ? `<button class="expand-btn" onclick="showFullTextById(${item.id})">📖 Развернуть</button>` : ''}
                 </div>
                 <div class="result-meta">
-                    <span class="derivative">🏠 ${item.derivative || '?'}</span>
-                    <span class="adjective">🧱 ← ${item.adjective || '?'}</span>
+                    <span class="derivative">🧱 ${item.derivative || '?'}</span>
+                    <span class="adjective">🏠 ← ${item.adjective || '?'}</span>
                     <span class="suffix suffix-badge">🔨 -${item.suffix || '?'}</span>
                     <span class="year">📅 ${item.year || '?'}</span>
                     <span class="style">🎭 ${item.style || '?'}</span>
@@ -225,28 +222,35 @@ function displayResults(results) {
     }).join('');
 }
 
-// Показ полного текста по ID
+
+// Показ полного текста по ID (исправленная версия)
 function showFullTextById(id) {
     const item = corpusData.find(d => d.id === id);
     if (item) {
+        // Используем full_text, а не text!
+        const fullText = item.full_text || item.text;
+        
         const fullItem = {
             ...item,
-            full_text: item.text,
+            full_text: fullText,
             first_url: item.urls && item.urls[0]
         };
         showFullText(fullItem);
     }
 }
 
-// Открытие модального окна с полным текстом
+// Открытие модального окна с полным текстом (исправленная версия)
 function showFullText(item) {
     const modal = document.getElementById('fulltextModal');
     const body = document.getElementById('fulltextBody');
     const meta = document.getElementById('fulltextMeta');
     
+    // Берём ПОЛНЫЙ текст
+    let fullText = item.full_text || item.text || '';
+    
     // Собираем все дериваты для подсветки
     const allDerivatives = new Set(corpusData.map(d => d.derivative).filter(d => d));
-    let highlightedText = item.full_text || item.text;
+    let highlightedText = fullText;
     
     const sortedDerivatives = Array.from(allDerivatives).sort((a, b) => b.length - a.length);
     for (const deriv of sortedDerivatives) {
@@ -256,11 +260,12 @@ function showFullText(item) {
         }
     }
     
-    body.innerHTML = `<div class="full-text">${highlightedText}</div>`;
+    // Показываем ВЕСЬ текст без обрезания
+    body.innerHTML = `<div class="full-text" style="white-space: pre-wrap; word-wrap: break-word;">${highlightedText}</div>`;
     
     meta.innerHTML = `
-        <span>🏠 ${item.derivative || '?'}</span>
-        <span>🧱 ← ${item.adjective || '?'}</span>
+        <span>🧱 ${item.derivative || '?'}</span>
+        <span>🏠 ← ${item.adjective || '?'}</span>
         <span>🔨 -${item.suffix || '?'}</span>
         <span>📅 ${item.year || '?'}</span>
         <span>🎭 ${item.style || '?'}</span>
