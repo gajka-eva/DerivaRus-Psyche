@@ -3,63 +3,101 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Корпус отадъективных дериватов</title>
+    <title>DerivaRus-Psyche — Корпус отадъективных дериватов</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
         <header>
             <h1>📚 Корпус отадъективных дериватов</h1>
-            <p>Производные существительные со значением 'носитель признака (лицо)'</p>
-            <p class="subtitle">«агрессивист», «умник», «злюка» и другие</p>
+            <p>Существительные со значением «носитель признака (лицо)»</p>
             <div class="stats" id="stats">Загрузка...</div>
         </header>
 
-        <div class="search-panel">
-            <div class="search-box">
-                <input type="text" id="searchInput" placeholder="Поиск деривата" autocomplete="off">
-                <button onclick="search()">🔍 Найти</button>
-                <button onclick="clearSearch()" class="clear-btn">✖ Очистить</button>
+        <!-- ДВА ОКНА ПОИСКА -->
+        <div class="dual-search">
+            <div class="search-group">
+                <label>🧱 Прилагательное, обозначающее психические характеристики</label>
+                <div class="autocomplete-container">
+                    <input type="text" id="adjSearch" placeholder="Например: агрессивный, злой, умный..." autocomplete="off">
+                    <div class="autocomplete-list" id="adjList"></div>
+                </div>
             </div>
             
-            <div class="filters">
+            <div class="search-group">
+                <label>🏠 Существительное</label>
+                <div class="autocomplete-container">
+                    <input type="text" id="derivSearch" placeholder="Например: агрессивист, злюка, умник..." autocomplete="off">
+                    <div class="autocomplete-list" id="derivList"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ФИЛЬТРЫ -->
+        <div class="filters-panel">
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label>🔨 Суффикс:</label>
+                    <select id="suffixFilter">
+                        <option value="">Все суффиксы</option>
+                    </select>
+                </div>
                 <div class="filter-group">
                     <label>📅 Год:</label>
                     <select id="yearFilter">
-                        <option value="">Все</option>
+                        <option value="">Все годы</option>
                     </select>
                 </div>
                 <div class="filter-group">
                     <label>🎭 Стиль:</label>
                     <select id="styleFilter">
-                        <option value="">Все</option>
+                        <option value="">Все стили</option>
                         <option value="разговорный">Разговорный</option>
                         <option value="публицистический">Публицистический</option>
                         <option value="художественный">Художественный</option>
 
                     </select>
                 </div>
-                <div class="filter-group">
-                    <label>🔤 Суффикс:</label>
-                    <select id="suffixFilter">
-                        <option value="">Все</option>
-                    </select>
-                </div>
+            </div>
+            <div class="search-buttons">
+                <button onclick="performSearch()" class="search-btn">🔍 Искать</button>
+                <button onclick="clearAll()" class="clear-btn">✖ Очистить всё</button>
             </div>
         </div>
 
+        <!-- РЕЗУЛЬТАТЫ -->
         <div class="results-header" id="resultsHeader"></div>
         <div class="results" id="results">
-            <div class="loading">Загрузка корпуса... (может занять несколько секунд)</div>
+            <div class="loading">🔍 Выберите прилагательное или существительное для поиска</div>
         </div>
         
         <footer>
-            <p>📊 Всего контекстов: <span id="totalCount">0</span> | 
-            🔗 <a href="https://github.com/ВАШ_АККАУНТ/adj-person-corpus" target="_blank">GitHub репозиторий</a> |
-            📝 Данные под лицензией CC BY 4.0</p>
+            <p>📊 <span id="totalCount">0</span> контекстов | 
+            🔗 <a href="https://github.com/gajka_eva/DerivaRus-Psyche" target="_blank">GitHub</a> |
+            💡 Подсвечиваются все дериваты в тексте</p>
         </footer>
     </div>
 
     <script src="script.js"></script>
+
+    <!-- Модальное окно для полного текста -->
+    <div id="fulltextModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📖 Полный контекст</h3>
+                <span class="modal-close">&times;</span>
+            </div>
+            <div class="modal-body" id="fulltextBody">
+                <!-- Сюда будет подставлен полный текст -->
+            </div>
+            <div class="modal-meta" id="fulltextMeta">
+                <!-- Метаданные -->
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeModal()" class="close-modal-btn">Закрыть</button>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>
