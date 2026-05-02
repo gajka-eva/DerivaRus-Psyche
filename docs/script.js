@@ -210,8 +210,8 @@ function displayResults(results) {
                     ${isTruncated ? `<button class="expand-btn" onclick="showFullTextById(${item.id})">📖 Развернуть</button>` : ''}
                 </div>
                 <div class="result-meta">
-                    <span class="derivative">🧱 ${item.derivative || '?'}</span>
-                    <span class="adjective">🏠 ← ${item.adjective || '?'}</span>
+                    <span class="derivative">🏠 ${item.derivative || '?'}</span>
+                    <span class="adjective">🧱 ← ${item.adjective || '?'}</span>
                     <span class="suffix suffix-badge">🔨 -${item.suffix || '?'}</span>
                     <span class="year">📅 ${item.year || '?'}</span>
                     <span class="style">🎭 ${item.style || '?'}</span>
@@ -264,8 +264,8 @@ function showFullText(item) {
     body.innerHTML = `<div class="full-text" style="white-space: pre-wrap; word-wrap: break-word;">${highlightedText}</div>`;
     
     meta.innerHTML = `
-        <span>🧱 ${item.derivative || '?'}</span>
-        <span>🏠 ← ${item.adjective || '?'}</span>
+        <span>🏠 ${item.derivative || '?'}</span>
+        <span>🧱 ← ${item.adjective || '?'}</span>
         <span>🔨 -${item.suffix || '?'}</span>
         <span>📅 ${item.year || '?'}</span>
         <span>🎭 ${item.style || '?'}</span>
